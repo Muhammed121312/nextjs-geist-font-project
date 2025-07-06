@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FiveM Multicharacter</title>
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: block; /* Changed for testing outside FiveM */
+            min-height: 100vh;
+        }
+        .character-card {
+            transition: all 0.3s ease;
+        }
+        .character-card:hover {
+            transform: scale(1.02);
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex items-center justify-center">
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-6xl mx-auto">
+            <h1 class="text-4xl font-bold text-white mb-8 text-center">Character Selection</h1>
+            
+            <div id="characters-container" class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+                <!-- Sample characters for testing -->
+                <div class="character-card bg-white rounded-lg p-8 shadow-lg cursor-pointer hover:shadow-xl">
+                    <div class="flex justify-between items-start mb-6">
+                        <h2 class="text-2xl font-bold text-black">John Doe</h2>
+                        <span class="text-gray-600 text-lg">Slot 1</span>
+                    </div>
+                    <div class="space-y-3 text-gray-700">
+                        <p><span class="font-semibold">Date of Birth:</span> 1990-01-01</p>
+                        <p><span class="font-semibold">Gender:</span> Male</p>
+                        <p><span class="font-semibold">Job:</span> Unemployed</p>
+                        <div class="mt-6 pt-4 border-t border-gray-200">
+                            <p><span class="font-semibold">Cash:</span> $5,000</p>
+                            <p><span class="font-semibold">Bank:</span> $50,000</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="character-card bg-white rounded-lg p-8 shadow-lg cursor-pointer hover:shadow-xl">
+                    <div class="flex justify-between items-start mb-6">
+                        <h2 class="text-2xl font-bold text-black">Jane Smith</h2>
+                        <span class="text-gray-600 text-lg">Slot 2</span>
+                    </div>
+                    <div class="space-y-3 text-gray-700">
+                        <p><span class="font-semibold">Date of Birth:</span> 1992-05-15</p>
+                        <p><span class="font-semibold">Gender:</span> Female</p>
+                        <p><span class="font-semibold">Job:</span> Police</p>
+                        <div class="mt-6 pt-4 border-t border-gray-200">
+                            <p><span class="font-semibold">Cash:</span> $7,500</p>
+                            <p><span class="font-semibold">Bank:</span> $75,000</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center">
+                <button id="create-character" class="bg-white text-black px-8 py-4 rounded-lg text-lg font-semibold hover:bg-gray-100 transition-colors shadow-lg hover:shadow-xl">
+                    Create New Character
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let characters = [];
+
+        function createCharacterCard(character) {
+            return `
+                <div class="character-card bg-white rounded-lg p-6 shadow-lg cursor-pointer" onclick="selectCharacter(${character.slot})">
+                    <div class="flex justify-between items-start mb-4">
+                        <h2 class="text-2xl font-bold text-black">${character.firstname} ${character.lastname}</h2>
+                        <span class="text-gray-600">Slot ${character.slot}</span>
+                    </div>
+                    <div class="space-y-2 text-gray-700">
+                        <p><span class="font-semibold">Date of Birth:</span> ${character.dateofbirth}</p>
+                        <p><span class="font-semibold">Gender:</span> ${character.gender}</p>
+                        <p><span class="font-semibold">Job:</span> ${character.job}</p>
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                            <p><span class="font-semibold">Cash:</span> $${character.cash.toLocaleString()}</p>
+                            <p><span class="font-semibold">Bank:</span> $${character.bank.toLocaleString()}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateCharactersList() {
+            const container = document.getElementById('characters-container');
+            container.innerHTML = characters.map(char => createCharacterCard(char)).join('');
+        }
+
+        function selectCharacter(slot) {
+            fetch(`https://${GetParentResourceName()}/selectCharacter`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    slot: slot
+                })
+            });
+        }
+
+        document.getElementById('create-character').addEventListener('click', () => {
+            fetch(`https://${GetParentResourceName()}/createCharacter`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            });
+        });
+
+        window.addEventListener('message', (event) => {
+            const item = event.data;
+            if (item.type === "ui") {
+                if (item.status) {
+                    characters = item.characters;
+                    updateCharactersList();
+                    document.body.style.display = "block";
+                } else {
+                    document.body.style.display = "none";
+                }
+            }
+        });
+
+        // Close on escape key
+        document.onkeyup = function (data) {
+            if (data.key === 'Escape') {
+                fetch(`https://${GetParentResourceName()}/close`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({})
+                });
+            }
+        };
+    </script>
+</body>
+</html>
